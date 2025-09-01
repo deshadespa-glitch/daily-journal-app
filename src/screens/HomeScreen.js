@@ -18,6 +18,7 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 
+// Mood config for icons + colors
 const moodConfig = {
   happy: { icon: "smile-o", color: "#FFC697" },
   smiling: { icon: "meh-o", color: "#F7E5B7" },
@@ -33,13 +34,13 @@ export default function HomeScreen() {
 
   const formatDate = (date) => {
     const isToday = date.toDateString() === new Date().toDateString();
-    if (isToday) return "Today";
-
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    return isToday
+      ? "Today"
+      : date.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        });
   };
 
   const goPrevDay = () => {
@@ -56,11 +57,11 @@ export default function HomeScreen() {
   };
 
   useEffect(() => {
-    // Convert selectedDate to Firestore format "Sep 1"
     const month = selectedDate.toLocaleString("en-US", { month: "short" });
     const day = selectedDate.getDate();
     const dateString = `${month} ${day}`;
 
+    // ✅ Query posts for the selected day, ordered by creation time
     const q = query(
       collection(db, "journalEntries"),
       where("date", "==", dateString),
@@ -69,7 +70,7 @@ export default function HomeScreen() {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
+        id: doc.id, // ✅ Include Firestore document ID
         ...doc.data(),
       }));
       setPostsForDay(data);
@@ -96,11 +97,12 @@ export default function HomeScreen() {
             { backgroundColor: mood.color || "#eee" },
           ]}
         >
+          {/* ⚙️ Edit Button */}
           <TouchableOpacity
             style={styles.gearIcon}
             onPress={(e) => {
-              e.stopPropagation();
-              navigation.navigate("EditScreen", { post: item });
+              e.stopPropagation(); // Prevent navigation to DetailScreen
+              navigation.navigate("EditScreen", { post: item }); // ✅ Pass full post (with Firestore ID)
             }}
           >
             <FontAwesome name="cog" size={20} color="black" />
@@ -108,6 +110,7 @@ export default function HomeScreen() {
 
           <Text style={styles.postTime}>{item.time}</Text>
           <Text style={styles.postComment}>{item.comment}</Text>
+
           {item.photo && (
             <Image
               source={{ uri: item.photo }}
@@ -122,6 +125,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Date Navigation */}
       <View style={styles.dateNavigator}>
         <TouchableOpacity onPress={goPrevDay} style={styles.navBtn}>
           <FontAwesome name="chevron-left" size={22} color="black" />
@@ -146,6 +150,7 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Posts */}
       {postsForDay.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>Nothing Exciting Today, Yet!</Text>

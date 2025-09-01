@@ -9,10 +9,11 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
-import DummyPost from "./DummyPost"; // ⛔ Currently local dummy data, replace with Firebase
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../../firebase"; // ✅ Make sure this points to your Firebase config
 
 export default function EditScreen({ route, navigation }) {
-  const { post } = route.params;
+  const { post } = route.params; // { id, comment, mood, date, time }
   const [comment, setComment] = useState(post.comment);
   const [mood, setMood] = useState(post.mood);
 
@@ -42,19 +43,25 @@ export default function EditScreen({ route, navigation }) {
     });
   }, [mood]);
 
-  // ✅ Save updated post (Currently updates DummyPost locally)
   const handleSave = async () => {
-    // 🔽 Backend Dev: Replace this block with Firebase Update query
-    // Example: update Firestore document by post.id with new { comment, mood }
-    const index = DummyPost.findIndex((p) => p.id === post.id);
-    if (index !== -1) {
-      DummyPost[index] = { ...DummyPost[index], comment, mood };
-      console.log("✏️ Updated Post:", DummyPost[index]);
-      console.log("📌 All Posts:", DummyPost);
-    }
+    try {
+      if (!post.id) {
+        console.error("❌ No document ID found");
+        return;
+      }
 
-    // 🔽 After Firebase update succeeds, navigate back
-    navigation.goBack();
+      const docRef = doc(db, "journalEntries", post.id); // ✅ Firestore collection: "posts"
+      await updateDoc(docRef, {
+        comment: comment,
+        mood: mood,
+        updatedAt: new Date(), // optional: track last update
+      });
+
+      console.log("✅ Post updated in Firestore:", { comment, mood });
+      navigation.goBack();
+    } catch (error) {
+      console.error("🔥 Error updating document:", error);
+    }
   };
 
   return (
@@ -157,8 +164,8 @@ const styles = StyleSheet.create({
     borderRadius: 35,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F8F8FF", // circle white so icons pop
-    elevation: 2, // shadow for Android
+    backgroundColor: "#F8F8FF",
+    elevation: 2,
   },
   saveButton: {
     backgroundColor: "#CBD3AD",
