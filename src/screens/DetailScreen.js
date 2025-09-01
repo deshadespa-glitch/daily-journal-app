@@ -1,20 +1,26 @@
-// Comments Here For Your Convenience
-
 import React, { useState } from "react";
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Image, 
-  TextInput, 
-  TouchableOpacity, 
-  FlatList 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
 } from "react-native";
+import { FontAwesome5 } from "@expo/vector-icons";
 
 export default function DetailScreen({ route, navigation }) {
-  const { post } = route.params; // gets { id, date, time, comment, mood, photo }
+  const { post } = route.params; // { id, date, time, comment, mood }
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
+
+  // Define moods with icons and colors
+  const moods = {
+    happy: { icon: "grin-alt", color: "#FFC697" },
+    smiling: { icon: "smile", color: "#F7E5B7" },
+    sad: { icon: "sad-tear", color: "#F9C5C7" },
+    angry: { icon: "tired", color: "#DDC3E3" },
+  };
 
   const addComment = () => {
     if (newComment.trim() !== "") {
@@ -32,56 +38,29 @@ export default function DetailScreen({ route, navigation }) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.dateText}>
-          {post.date ? new Date(post.date).toDateString() : ""}
-        </Text>
+        <Text style={styles.dateText}>{post.date || ""}</Text>
         <Text style={styles.dateText}>{post.time || ""}</Text>
       </View>
 
-      {/* Post Comment (PostLabel) */}
+      {/* Mood Section */}
+      <Text style={styles.label}>Mood</Text>
+      <View style={styles.moodBox}>
+        {moods[post.mood] ? (
+          <FontAwesome5
+            name={moods[post.mood].icon}
+            size={40}
+            color={moods[post.mood].color}
+          />
+        ) : (
+          <Text style={styles.postText}>No mood</Text>
+        )}
+      </View>
+
+      {/* Post Comment */}
       <Text style={styles.label}>Post</Text>
       <View style={styles.postBox}>
         <Text style={styles.postText}>{post.comment}</Text>
       </View>
-
-      {/* Photo */}
-      {post.photo ? (
-        <View style={styles.photoBox}>
-          <Image source={{ uri: post.photo }} style={styles.image} />
-        </View>
-      ) : (
-        <View style={styles.photoBox}>
-          <Text style={styles.photoText}>No Photo</Text>
-        </View>
-      )}
-
-      {/* Comment Section */}
-      <Text style={styles.label}>Comments</Text>
-      <FlatList
-        data={comments}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.commentBox}>
-            <Text style={styles.commentText}>• {item.text}</Text>
-          </View>
-        )}
-        ListEmptyComponent={
-          <Text style={{ color: "#666", marginVertical: 5 }}>
-            No comments yet.
-          </Text>
-        }
-      />
-
-      {/* Add Comment */}
-      <TextInput
-        style={styles.input}
-        placeholder="Write a comment..."
-        value={newComment}
-        onChangeText={setNewComment}
-      />
-      <TouchableOpacity style={styles.commentButton} onPress={addComment}>
-        <Text style={styles.commentTextBtn}>Post Comment</Text>
-      </TouchableOpacity>
 
       {/* Delete Post Button */}
       <TouchableOpacity style={styles.deleteButton} onPress={deletePost}>
@@ -102,29 +81,27 @@ const styles = StyleSheet.create({
 
   label: { fontSize: 20, marginVertical: 10 },
 
+  moodBox: {
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    backgroundColor: "#fff",
+    padding: 20,
+    marginBottom: 15,
+  },
+
   postBox: {
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
     backgroundColor: "#fff",
     padding: 15,
-    minHeight: 80,
+    minHeight: 50,
     marginBottom: 15,
   },
   postText: { fontSize: 16, color: "#333" },
-
-  photoBox: {
-    height: 250,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
-    backgroundColor: "#fff",
-  },
-  photoText: { color: "#666" },
-  image: { width: "100%", height: "100%", borderRadius: 8 },
 
   commentBox: {
     backgroundColor: "#fff",
