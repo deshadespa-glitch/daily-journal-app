@@ -116,10 +116,10 @@ export default function EditScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    padding: 20, 
-    backgroundColor: "#F8F8FF"
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#F8F8FF",
   },
   header: {
     flexDirection: "row",
