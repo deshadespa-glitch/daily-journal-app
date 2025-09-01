@@ -13,12 +13,12 @@ import {
 } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDceCoqBei2G9XxpmJ57v3pr6wJgsMlgko",
-  authDomain: "expofirebase-fffb9.firebaseapp.com",
-  projectId: "expofirebase-fffb9",
-  storageBucket: "expofirebase-fffb9.firebasestorage.app",
-  messagingSenderId: "832167983802",
-  appId: "1:832167983802:web:340105ede37fb97a5f6083",
+  apiKey: "AIzaSyBR4g78BpRjqx5paCn5R73AdtlHtE0tUEM",
+  authDomain: "daily-journal-app-85d51.firebaseapp.com",
+  projectId: "daily-journal-app-85d51",
+  storageBucket: "daily-journal-app-85d51.firebasestorage.app",
+  messagingSenderId: "881893774620",
+  appId: "1:881893774620:web:d7786b287134595e07d6d9"
 };
 
 // ✅ Only initialize once

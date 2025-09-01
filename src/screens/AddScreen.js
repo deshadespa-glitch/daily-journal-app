@@ -1,6 +1,3 @@
-// Added Comments For Your Convenience
-
-
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
@@ -10,34 +7,28 @@ import {
   StyleSheet,
   Image,
   Animated,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { FontAwesome5 } from "@expo/vector-icons";
-
-// 🔹 DummyPost is a temporary local array used as mock database
-// Backend should replace this with API (POST request → save to DB)
-import DummyPost from "./DummyPost";
+import { db, storage } from "../../firebase"; // ✅ import Firebase
+import { collection, addDoc, Timestamp } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function AddScreen({ navigation }) {
-  // 🔹 Local UI states for each field
   const [time, setTime] = useState("");
   const [date, setDate] = useState("");
   const [comment, setComment] = useState("");
   const [photo, setPhoto] = useState(null);
   const [mood, setMood] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // 🔹 Automatically keep current date & time updated
   useEffect(() => {
     const updateDateTime = () => {
       const now = new Date();
       setTime(now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
-      setDate(
-        now.toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        })
-      );
+      setDate(now.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
     };
 
     updateDateTime();
@@ -45,8 +36,6 @@ export default function AddScreen({ navigation }) {
     return () => clearInterval(timer);
   }, []);
 
-  // 🔹 Pick image using camera → store locally as URI
-  // Backend: send this URI file as multipart/form-data to API
   const pickImage = async () => {
     let result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -58,29 +47,52 @@ export default function AddScreen({ navigation }) {
     }
   };
 
-  // 🔹 "Save" handler → builds a new post object
-  // For backend: Replace DummyPost.push with API POST request
-  const handleSave = () => {
-    const newPost = {
-      id: DummyPost.length + 1, // Backend should auto-generate ID
-      date: new Date().toISOString(), // ISO format date (store in DB)
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      comment, // user input text
-      mood, // selected mood (string)
-      photo, // photo file URI (needs upload)
-    };
-
-    // 🔹 Mock behavior (local only)
-    DummyPost.push(newPost);
-    console.log("✅ Added New Post:", newPost);
-    console.log("📌 Updated DummyPost:", DummyPost);
-
-    // 🔹 Navigation back to Home → triggers refresh to see new post
-    navigation.goBack();
+  const uploadImage = async (uri) => {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    const filename = `journalImages/${Date.now()}.jpg`;
+    const imageRef = ref(storage, filename);
+    await uploadBytes(imageRef, blob);
+    const downloadURL = await getDownloadURL(imageRef);
+    return downloadURL;
   };
 
-  // 🔹 Mood buttons available
-  // Backend: this can be stored as a string enum in DB (happy, sad, etc.)
+  const handleSave = async () => {
+    if (!comment.trim() && !photo && !mood) {
+      Alert.alert("Error", "Please add a comment, photo, or mood before saving.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      let photoURL = null;
+      if (photo) {
+        photoURL = await uploadImage(photo);
+      }
+
+      const newPost = {
+        date: date,
+        time: time,
+        comment,
+        mood,
+        photo: photoURL,
+        createdAt: Timestamp.now(), // ✅ Firestore timestamp
+      };
+
+      await addDoc(collection(db, "journalEntries"), newPost); // ✅ Firestore insert
+      console.log("✅ Added New Post:", newPost);
+
+      Alert.alert("Success", "Your entry has been saved!");
+      navigation.goBack();
+    } catch (error) {
+      console.error("❌ Error saving post:", error);
+      Alert.alert("Error", "Failed to save your entry.");
+    }
+
+    setLoading(false);
+  };
+
   const moods = [
     { name: "happy", icon: "grin-alt", color: "#FFC697" },
     { name: "smiling", icon: "smile", color: "#F7E5B7" },
@@ -88,7 +100,6 @@ export default function AddScreen({ navigation }) {
     { name: "angry", icon: "tired", color: "#DDC3E3" },
   ];
 
-  // 🔹 Animations for mood selection (UI only)
   const borderAnims = useRef(
     moods.reduce((acc, m) => {
       acc[m.name] = new Animated.Value(2);
@@ -108,7 +119,6 @@ export default function AddScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* 🔹 Header with date/time and close button */}
       <View style={styles.header}>
         <Text style={styles.dateText}>
           {time} , {date}
@@ -118,7 +128,6 @@ export default function AddScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* 🔹 Comment input (user's text content) */}
       <Text style={styles.label}>Comment</Text>
       <TextInput
         style={styles.input}
@@ -128,7 +137,6 @@ export default function AddScreen({ navigation }) {
         multiline
       />
 
-      {/* 🔹 Photo section (user can capture photo) */}
       <Text style={styles.label}>Photo</Text>
       <TouchableOpacity style={styles.photoBox} onPress={pickImage}>
         {photo ? (
@@ -138,7 +146,6 @@ export default function AddScreen({ navigation }) {
         )}
       </TouchableOpacity>
 
-      {/* 🔹 Mood selection */}
       <Text style={styles.label}>Mood</Text>
       <View style={styles.moodContainer}>
         {moods.map((m) => (
@@ -162,20 +169,19 @@ export default function AddScreen({ navigation }) {
         ))}
       </View>
 
-      {/* 🔹 Save button → currently pushes to DummyPost, replace with API */}
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveText}>Save</Text>
+      <TouchableOpacity
+        style={[styles.saveButton, loading && { opacity: 0.5 }]}
+        onPress={handleSave}
+        disabled={loading}
+      >
+        <Text style={styles.saveText}>{loading ? "Saving..." : "Save"}</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    padding: 20, 
-    backgroundColor: "#F8F8FF"
-  },
+  container: { flex: 1, padding: 20, backgroundColor: "#F8F8FF" },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -215,9 +221,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 10,
   },
-  moodButton: {
-    padding: 5,
-  },
+  moodButton: { padding: 5 },
   moodCircle: {
     width: 70,
     height: 70,
