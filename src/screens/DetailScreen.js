@@ -1,20 +1,13 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-} from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
+import { db } from "../../firebase"; // ✅ Make sure this points to your firebase config
+import { doc, deleteDoc } from "firebase/firestore";
 
 export default function DetailScreen({ route, navigation }) {
   const { post } = route.params; // { id, date, time, comment, mood }
-  const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Define moods with icons and colors
   const moods = {
     happy: { icon: "grin-alt", color: "#FFC697" },
     smiling: { icon: "smile", color: "#F7E5B7" },
@@ -22,16 +15,19 @@ export default function DetailScreen({ route, navigation }) {
     angry: { icon: "tired", color: "#DDC3E3" },
   };
 
-  const addComment = () => {
-    if (newComment.trim() !== "") {
-      setComments([...comments, { id: Date.now(), text: newComment }]);
-      setNewComment("");
+  const deletePost = async () => {
+    try {
+      setLoading(true);
+      const docRef = doc(db, "journalEntries", post.id); // ✅ Correct collection
+      await deleteDoc(docRef);
+      Alert.alert("Deleted", "Your journal entry has been deleted.");
+      navigation.goBack();
+    } catch (error) {
+      console.error("🔥 Error deleting document:", error);
+      Alert.alert("Error", "Failed to delete the post.");
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const deletePost = () => {
-    console.log("Deleting post:", post.id);
-    navigation.goBack();
   };
 
   return (
@@ -63,8 +59,14 @@ export default function DetailScreen({ route, navigation }) {
       </View>
 
       {/* Delete Post Button */}
-      <TouchableOpacity style={styles.deleteButton} onPress={deletePost}>
-        <Text style={styles.deleteText}>Delete Post</Text>
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={deletePost}
+        disabled={loading}
+      >
+        <Text style={styles.deleteText}>
+          {loading ? "Deleting..." : "Delete Post"}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -102,32 +104,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   postText: { fontSize: 16, color: "#333" },
-
-  commentBox: {
-    backgroundColor: "#fff",
-    padding: 10,
-    borderRadius: 8,
-    marginVertical: 5,
-  },
-  commentText: { fontSize: 15, color: "#333" },
-
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    backgroundColor: "#fff",
-    padding: 10,
-    marginTop: 10,
-  },
-  commentButton: {
-    backgroundColor: "#C8CEEE",
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
-    marginBottom: 10,
-  },
-  commentTextBtn: { color: "#000", fontWeight: "bold" },
 
   deleteButton: {
     backgroundColor: "#CBD3AD",
