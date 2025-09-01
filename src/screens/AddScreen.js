@@ -5,30 +5,30 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image,
   Animated,
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker";
 import { FontAwesome5 } from "@expo/vector-icons";
-import { db, storage } from "../../firebase"; // ✅ import Firebase
+import { db } from "../../firebase"; // ✅ Firestore only
 import { collection, addDoc, Timestamp } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function AddScreen({ navigation }) {
   const [time, setTime] = useState("");
   const [date, setDate] = useState("");
   const [comment, setComment] = useState("");
-  const [photo, setPhoto] = useState(null);
   const [mood, setMood] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const updateDateTime = () => {
       const now = new Date();
-      setTime(now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
-      setDate(now.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
+      setTime(
+        now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      );
+      setDate(
+        now.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+      );
     };
 
     updateDateTime();
@@ -36,51 +36,24 @@ export default function AddScreen({ navigation }) {
     return () => clearInterval(timer);
   }, []);
 
-  const pickImage = async () => {
-    let result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setPhoto(result.assets[0].uri);
-    }
-  };
-
-  const uploadImage = async (uri) => {
-    const response = await fetch(uri);
-    const blob = await response.blob();
-    const filename = `journalImages/${Date.now()}.jpg`;
-    const imageRef = ref(storage, filename);
-    await uploadBytes(imageRef, blob);
-    const downloadURL = await getDownloadURL(imageRef);
-    return downloadURL;
-  };
-
   const handleSave = async () => {
-    if (!comment.trim() && !photo && !mood) {
-      Alert.alert("Error", "Please add a comment, photo, or mood before saving.");
+    if (!comment.trim() && !mood) {
+      Alert.alert("Error", "Please add a comment or mood before saving.");
       return;
     }
 
     setLoading(true);
 
     try {
-      let photoURL = null;
-      if (photo) {
-        photoURL = await uploadImage(photo);
-      }
-
       const newPost = {
         date: date,
         time: time,
         comment,
         mood,
-        photo: photoURL,
         createdAt: Timestamp.now(), // ✅ Firestore timestamp
       };
 
-      await addDoc(collection(db, "journalEntries"), newPost); // ✅ Firestore insert
+      await addDoc(collection(db, "journalEntries"), newPost);
       console.log("✅ Added New Post:", newPost);
 
       Alert.alert("Success", "Your entry has been saved!");
@@ -137,15 +110,6 @@ export default function AddScreen({ navigation }) {
         multiline
       />
 
-      <Text style={styles.label}>Photo</Text>
-      <TouchableOpacity style={styles.photoBox} onPress={pickImage}>
-        {photo ? (
-          <Image source={{ uri: photo }} style={styles.image} />
-        ) : (
-          <Text style={styles.photoText}>📸 Take a Photo</Text>
-        )}
-      </TouchableOpacity>
-
       <Text style={styles.label}>Mood</Text>
       <View style={styles.moodContainer}>
         {moods.map((m) => (
@@ -201,18 +165,6 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
     backgroundColor: "#fff",
   },
-  photoBox: {
-    height: 250,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
-    backgroundColor: "#fff",
-  },
-  photoText: { color: "#666" },
-  image: { width: "100%", height: "100%", borderRadius: 8 },
   moodContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
