@@ -17,8 +17,9 @@ import {
   orderBy,
   onSnapshot,
 } from "firebase/firestore";
+import { Calendar } from "react-native-calendars"; // ✅ Calendar
 
-// Mood config for icons + colors
+// Mood config
 const moodConfig = {
   happy: { icon: "smile-o", color: "#FFC697" },
   smiling: { icon: "meh-o", color: "#F7E5B7" },
@@ -30,6 +31,7 @@ export default function HomeScreen() {
   const today = new Date();
   const [selectedDate, setSelectedDate] = useState(today);
   const [postsForDay, setPostsForDay] = useState([]);
+  const [showCalendar, setShowCalendar] = useState(false); // ✅ toggle calendar
   const navigation = useNavigation();
 
   const formatDate = (date) => {
@@ -43,25 +45,12 @@ export default function HomeScreen() {
         });
   };
 
-  const goPrevDay = () => {
-    const prev = new Date(selectedDate);
-    prev.setDate(selectedDate.getDate() - 1);
-    setSelectedDate(prev);
-  };
-
-  const goNextDay = () => {
-    const next = new Date(selectedDate);
-    next.setDate(selectedDate.getDate() + 1);
-    if (next > today) return;
-    setSelectedDate(next);
-  };
-
+  // 🔥 Firestore query updates whenever selectedDate changes
   useEffect(() => {
     const month = selectedDate.toLocaleString("en-US", { month: "short" });
     const day = selectedDate.getDate();
     const dateString = `${month} ${day}`;
 
-    // ✅ Query posts for the selected day, ordered by creation time
     const q = query(
       collection(db, "journalEntries"),
       where("date", "==", dateString),
@@ -70,7 +59,7 @@ export default function HomeScreen() {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map((doc) => ({
-        id: doc.id, // ✅ Include Firestore document ID
+        id: doc.id,
         ...doc.data(),
       }));
       setPostsForDay(data);
@@ -101,8 +90,8 @@ export default function HomeScreen() {
           <TouchableOpacity
             style={styles.gearIcon}
             onPress={(e) => {
-              e.stopPropagation(); // Prevent navigation to DetailScreen
-              navigation.navigate("EditScreen", { post: item }); // ✅ Pass full post (with Firestore ID)
+              e.stopPropagation();
+              navigation.navigate("EditScreen", { post: item });
             }}
           >
             <FontAwesome name="cog" size={20} color="black" />
@@ -125,30 +114,29 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Date Navigation */}
+      {/* Date Header with Calendar Toggle */}
       <View style={styles.dateNavigator}>
-        <TouchableOpacity onPress={goPrevDay} style={styles.navBtn}>
-          <FontAwesome name="chevron-left" size={22} color="black" />
+        <TouchableOpacity onPress={() => setShowCalendar(!showCalendar)}>
+          <FontAwesome name="calendar" size={24} color="black" />
         </TouchableOpacity>
-
         <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
-
-        <TouchableOpacity
-          onPress={goNextDay}
-          style={styles.navBtn}
-          disabled={selectedDate.toDateString() === today.toDateString()}
-        >
-          <FontAwesome
-            name="chevron-right"
-            size={22}
-            color={
-              selectedDate.toDateString() === today.toDateString()
-                ? "gray"
-                : "black"
-            }
-          />
-        </TouchableOpacity>
       </View>
+
+      {/* Calendar */}
+      {showCalendar && (
+        <Calendar
+          onDayPress={(day) => {
+            setSelectedDate(new Date(day.dateString));
+            setShowCalendar(false); // hide after selection
+          }}
+          markedDates={{
+            [selectedDate.toISOString().split("T")[0]]: {
+              selected: true,
+              selectedColor: "#CBD3AD",
+            },
+          }}
+        />
+      )}
 
       {/* Posts */}
       {postsForDay.length === 0 ? (
@@ -168,20 +156,15 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 10,
-    marginVertical: 10,
-    backgroundColor: "#F8F8FF",
-  },
+  container: { flex: 1, padding: 10, backgroundColor: "#F8F8FF" },
   dateNavigator: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     alignItems: "center",
-    marginVertical: 30,
+    marginVertical: 20,
+    gap: 10,
   },
-  navBtn: { paddingHorizontal: 10 },
-  dateText: { fontSize: 18, fontWeight: "bold" },
+  dateText: { fontSize: 18, fontWeight: "bold", marginLeft: 10 },
   postContainer: {
     flexDirection: "row",
     marginVertical: 8,
@@ -194,12 +177,7 @@ const styles = StyleSheet.create({
     padding: 10,
     position: "relative",
   },
-  gearIcon: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    zIndex: 1,
-  },
+  gearIcon: { position: "absolute", top: 8, right: 8, zIndex: 1 },
   postTime: { fontWeight: "bold", marginBottom: 4 },
   postComment: { marginBottom: 6 },
   postImage: {
@@ -208,11 +186,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 4,
   },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  emptyState: { flex: 1, justifyContent: "center", alignItems: "center" },
   emptyText: { fontSize: 16, color: "#666", textAlign: "center" },
   listContent: { paddingBottom: 20 },
 });
