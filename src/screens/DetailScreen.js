@@ -1,11 +1,19 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  Image,
+  ScrollView,
+} from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
-import { db } from "../../firebase"; // ✅ Make sure this points to your firebase config
+import { db } from "../../firebase"; // ✅ Firestore config
 import { doc, deleteDoc } from "firebase/firestore";
 
 export default function DetailScreen({ route, navigation }) {
-  const { post } = route.params; // { id, date, time, comment, mood }
+  const { post } = route.params; // { id, date, time, comment, mood, image }
   const [loading, setLoading] = useState(false);
 
   const moods = {
@@ -18,7 +26,7 @@ export default function DetailScreen({ route, navigation }) {
   const deletePost = async () => {
     try {
       setLoading(true);
-      const docRef = doc(db, "journalEntries", post.id); // ✅ Correct collection
+      const docRef = doc(db, "journalEntries", post.id);
       await deleteDoc(docRef);
       Alert.alert("Deleted", "Your journal entry has been deleted.");
       navigation.goBack();
@@ -31,7 +39,7 @@ export default function DetailScreen({ route, navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.dateText}>{post.date || ""}</Text>
@@ -55,8 +63,16 @@ export default function DetailScreen({ route, navigation }) {
       {/* Post Comment */}
       <Text style={styles.label}>Post</Text>
       <View style={styles.postBox}>
-        <Text style={styles.postText}>{post.comment}</Text>
+        <Text style={styles.postText}>{post.comment || "No comment"}</Text>
       </View>
+
+      {/* ✅ Display Photo if available */}
+      {post.image ? (
+        <>
+          <Text style={styles.label}>Photo</Text>
+          <Image source={{ uri: post.image }} style={styles.postImage} />
+        </>
+      ) : null}
 
       {/* Delete Post Button */}
       <TouchableOpacity
@@ -68,12 +84,16 @@ export default function DetailScreen({ route, navigation }) {
           {loading ? "Deleting..." : "Delete Post"}
         </Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#F8F8FF" },
+  container: {
+    flexGrow: 1,
+    padding: 20,
+    backgroundColor: "#F8F8FF",
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -81,7 +101,7 @@ const styles = StyleSheet.create({
   },
   dateText: { fontSize: 18, fontWeight: "bold" },
 
-  label: { fontSize: 20, marginVertical: 10 },
+  label: { fontSize: 20, marginVertical: 10, fontWeight: "bold" },
 
   moodBox: {
     justifyContent: "center",
@@ -104,6 +124,13 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   postText: { fontSize: 16, color: "#333" },
+
+  postImage: {
+    width: "100%",
+    height: 250,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
 
   deleteButton: {
     backgroundColor: "#CBD3AD",

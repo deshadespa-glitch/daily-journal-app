@@ -7,9 +7,11 @@ import {
   StyleSheet,
   Animated,
   Alert,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { db } from "../../firebase"; // ✅ Firestore only
 import { collection, addDoc, Timestamp } from "firebase/firestore";
 
@@ -19,6 +21,7 @@ export default function AddScreen({ navigation }) {
   const [comment, setComment] = useState("");
   const [mood, setMood] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [image, setImage] = useState(null); // ✅ New state for photo
 
   useEffect(() => {
     const updateDateTime = () => {
@@ -36,9 +39,30 @@ export default function AddScreen({ navigation }) {
     return () => clearInterval(timer);
   }, []);
 
+  // ✅ Pick image from gallery
+  const pickImage = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permissionResult.granted) {
+      Alert.alert("Permission required", "Please allow photo access.");
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
+
   const handleSave = async () => {
-    if (!comment.trim() && !mood) {
-      Alert.alert("Error", "Please add a comment or mood before saving.");
+    if (!comment.trim() && !mood && !image) {
+      Alert.alert("Error", "Please add a comment, mood, or photo before saving.");
       return;
     }
 
@@ -50,7 +74,8 @@ export default function AddScreen({ navigation }) {
         time: time,
         comment,
         mood,
-        createdAt: Timestamp.now(), // ✅ Firestore timestamp
+        image: image || null, // ✅ Save image URI
+        createdAt: Timestamp.now(),
       };
 
       await addDoc(collection(db, "journalEntries"), newPost);
@@ -133,6 +158,17 @@ export default function AddScreen({ navigation }) {
         ))}
       </View>
 
+      {/* ✅ Image Upload Section */}
+      <Text style={styles.label}>Photo</Text>
+      {image && (
+        <Image source={{ uri: image }} style={styles.previewImage} />
+      )}
+      <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
+        <Text style={styles.photoButtonText}>
+          {image ? "Change Photo" : "Add Photo"}
+        </Text>
+      </TouchableOpacity>
+
       <TouchableOpacity
         style={[styles.saveButton, loading && { opacity: 0.5 }]}
         onPress={handleSave}
@@ -183,6 +219,20 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8F8FF",
     elevation: 2,
   },
+  previewImage: {
+    width: "100%",
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  photoButton: {
+    backgroundColor: "#E0E5B6",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  photoButtonText: { fontSize: 16, fontWeight: "bold", color: "#000" },
   saveButton: {
     backgroundColor: "#CBD3AD",
     padding: 15,

@@ -6,16 +6,21 @@ import {
   TouchableOpacity,
   StyleSheet,
   Animated,
+  Image,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { doc, updateDoc } from "firebase/firestore";
-import { db } from "../../firebase"; // ✅ Make sure this points to your Firebase config
+import { db } from "../../firebase"; // ✅ Firestore config
 
 export default function EditScreen({ route, navigation }) {
-  const { post } = route.params; // { id, comment, mood, date, time }
+  const { post } = route.params; // { id, comment, mood, date, time, image }
   const [comment, setComment] = useState(post.comment);
   const [mood, setMood] = useState(post.mood);
+  const [image, setImage] = useState(post.image || null); // ✅ Add image state
+  const [loading, setLoading] = useState(false);
 
   // Mood icons + colors
   const moods = [
@@ -43,6 +48,27 @@ export default function EditScreen({ route, navigation }) {
     });
   }, [mood]);
 
+  // ✅ Pick new image
+  const pickImage = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permissionResult.granted) {
+      Alert.alert("Permission required", "Please allow photo access.");
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
+
   const handleSave = async () => {
     try {
       if (!post.id) {
@@ -50,17 +76,22 @@ export default function EditScreen({ route, navigation }) {
         return;
       }
 
-      const docRef = doc(db, "journalEntries", post.id); // ✅ Firestore collection: "posts"
+      setLoading(true);
+
+      const docRef = doc(db, "journalEntries", post.id);
       await updateDoc(docRef, {
         comment: comment,
         mood: mood,
-        updatedAt: new Date(), // optional: track last update
+        image: image || null, // ✅ Update image too
+        updatedAt: new Date(),
       });
 
-      console.log("✅ Post updated in Firestore:", { comment, mood });
+      console.log("✅ Post updated in Firestore:", { comment, mood, image });
       navigation.goBack();
     } catch (error) {
       console.error("🔥 Error updating document:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -114,20 +145,31 @@ export default function EditScreen({ route, navigation }) {
         ))}
       </View>
 
+      {/* ✅ Image Section */}
+      <Text style={styles.label}>Photo</Text>
+      {image && <Image source={{ uri: image }} style={styles.previewImage} />}
+      <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
+        <Text style={styles.photoButtonText}>
+          {image ? "Change Photo" : "Add Photo"}
+        </Text>
+      </TouchableOpacity>
+
       {/* Save */}
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveText}>Save</Text>
+      <TouchableOpacity
+        style={[styles.saveButton, loading && { opacity: 0.5 }]}
+        onPress={handleSave}
+        disabled={loading}
+      >
+        <Text style={styles.saveText}>
+          {loading ? "Saving..." : "Save"}
+        </Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: "#F8F8FF",
-  },
+  container: { flex: 1, padding: 20, backgroundColor: "#F8F8FF" },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -155,9 +197,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 10,
   },
-  moodButton: {
-    padding: 5,
-  },
+  moodButton: { padding: 5 },
   moodCircle: {
     width: 70,
     height: 70,
@@ -167,6 +207,20 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8F8FF",
     elevation: 2,
   },
+  previewImage: {
+    width: "100%",
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  photoButton: {
+    backgroundColor: "#E0E5B6",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  photoButtonText: { fontSize: 16, fontWeight: "bold", color: "#000" },
   saveButton: {
     backgroundColor: "#CBD3AD",
     padding: 15,
