@@ -30,6 +30,15 @@ export default function EditScreen({ route, navigation }) {
     { name: "angry", icon: "tired", color: "#DDC3E3" },
   ];
 
+  const formatDate = (date) => {
+    if (!date) return "";
+    if (date.toDate) {
+      // Firestore Timestamp
+      return date.toDate();
+    }
+    return new Date(date); // string or JS Date
+  };
+
   // Animated border widths for donut effect
   const borderAnims = useRef(
     moods.reduce((acc, m) => {
@@ -100,11 +109,13 @@ export default function EditScreen({ route, navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.dateText}>
-          {post.time} ,{" "}
-          {new Date(post.date).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          })}
+          {post.time},{" "}
+          {post.createdAt
+            ? post.createdAt.toDate().toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })
+            : post.date}
         </Text>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="close" size={28} color="black" />
@@ -160,26 +171,29 @@ export default function EditScreen({ route, navigation }) {
         onPress={handleSave}
         disabled={loading}
       >
-        <Text style={styles.saveText}>
-          {loading ? "Saving..." : "Save"}
-        </Text>
+        <Text style={styles.saveText}>{loading ? "Saving..." : "Save"}</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#F8F8FF" },
+  container: { flex: 1, padding: 20, backgroundColor: "#F7F4EA" }, // ✅ Cream background
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 20,
-    backgroundColor: "#F8F8FF",
+    backgroundColor: "#F7F4EA", // ✅ Consistent cream header
     padding: 10,
     borderRadius: 10,
   },
-  dateText: { fontSize: 18, fontWeight: "bold" },
-  label: { fontSize: 20, marginVertical: 10, fontWeight: "bold" },
+  dateText: { fontSize: 18, fontWeight: "bold", color: "#333" },
+  label: {
+    fontSize: 20,
+    marginVertical: 10,
+    fontWeight: "bold",
+    color: "#A8BBA3",
+  }, // ✅ Sage green for labels
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
@@ -193,7 +207,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     marginVertical: 20,
-    backgroundColor: "#F8F8FF",
+    backgroundColor: "#F7F4EA",
     borderRadius: 10,
     paddingVertical: 10,
   },
@@ -204,7 +218,7 @@ const styles = StyleSheet.create({
     borderRadius: 35,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F8F8FF",
+    backgroundColor: "#F7F4EA",
     elevation: 2,
   },
   previewImage: {
@@ -214,7 +228,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   photoButton: {
-    backgroundColor: "#E0E5B6",
+    backgroundColor: "#EBD9D1", // ✅ Soft blush for photo button
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
@@ -222,11 +236,11 @@ const styles = StyleSheet.create({
   },
   photoButtonText: { fontSize: 16, fontWeight: "bold", color: "#000" },
   saveButton: {
-    backgroundColor: "#CBD3AD",
+    backgroundColor: "#A8BBA3", // ✅ Sage green for save button
     padding: 15,
     borderRadius: 10,
     alignItems: "center",
     marginTop: "auto",
   },
-  saveText: { color: "#000", fontSize: 18, fontWeight: "bold" },
+  saveText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
 });

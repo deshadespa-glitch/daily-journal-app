@@ -156,37 +156,87 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 10, backgroundColor: "#F8F8FF" },
+  container: { 
+    flex: 1, 
+    padding: 15, 
+    backgroundColor: "#F7F4EA" // ✅ cream base
+  },
+
+  // Date Header
   dateNavigator: {
     flexDirection: "row",
-    justifyContent: "flex-start",
     alignItems: "center",
-    marginVertical: 20,
-    gap: 10,
+    backgroundColor: "#A8BBA3", // ✅ sage green banner
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 15,
   },
-  dateText: { fontSize: 18, fontWeight: "bold", marginLeft: 10 },
+  dateText: { 
+    fontSize: 18, 
+    fontWeight: "bold", 
+    marginLeft: 10,
+    color: "#F7F4EA", // ✅ white/cream contrast
+  },
+
+  // Posts
   postContainer: {
     flexDirection: "row",
-    marginVertical: 8,
+    marginVertical: 10,
     alignItems: "flex-start",
   },
-  moodBox: { width: "10%", justifyContent: "center", alignItems: "center" },
-  postContent: {
-    width: "90%",
-    borderRadius: 12,
-    padding: 10,
-    position: "relative",
+  moodBox: { 
+    width: "12%", 
+    justifyContent: "center", 
+    alignItems: "center",
   },
-  gearIcon: { position: "absolute", top: 8, right: 8, zIndex: 1 },
-  postTime: { fontWeight: "bold", marginBottom: 4 },
-  postComment: { marginBottom: 6 },
+  postContent: {
+    width: "88%",
+    borderRadius: 15,
+    padding: 12,
+    position: "relative",
+    backgroundColor: "#EBD9D1", // ✅ soft blush card
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+
+  // Buttons
+  gearIcon: { 
+    position: "absolute", 
+    top: 10, 
+    right: 10, 
+    zIndex: 1,
+  },
+  postTime: { 
+    fontWeight: "bold", 
+    marginBottom: 6, 
+    color: "#333" 
+  },
+  postComment: { 
+    marginBottom: 8, 
+    fontSize: 15, 
+    color: "#444" 
+  },
   postImage: {
     width: "100%",
-    height: 150,
-    borderRadius: 10,
-    marginTop: 4,
+    height: 160,
+    borderRadius: 12,
+    marginTop: 6,
   },
-  emptyState: { flex: 1, justifyContent: "center", alignItems: "center" },
-  emptyText: { fontSize: 16, color: "#666", textAlign: "center" },
+
+  // Empty State
+  emptyState: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center" 
+  },
+  emptyText: { 
+    fontSize: 16, 
+    color: "#999", 
+    textAlign: "center" 
+  },
+
+  // FlatList spacing
   listContent: { paddingBottom: 20 },
 });

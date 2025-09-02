@@ -4,6 +4,11 @@ import { View, Text, StyleSheet, ScrollView } from "react-native";
 export default function DeveloperScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      {/* ✅ Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Daily Journal</Text>
+      </View>
+
       <Text style={styles.title}>Developer Info</Text>
 
       <View style={styles.section}>
@@ -45,6 +50,18 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     backgroundColor: "#F8F8FF",
+  },
+  header: {
+    backgroundColor: "#CBD3AD",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#000",
   },
   title: {
     fontSize: 24,

@@ -61,35 +61,39 @@ export default function AddScreen({ navigation }) {
   };
 
   const handleSave = async () => {
-    if (!comment.trim() && !mood && !image) {
-      Alert.alert("Error", "Please add a comment, mood, or photo before saving.");
-      return;
-    }
+  if (!comment.trim() && !mood && !image) {
+    Alert.alert("Error", "Please add a comment, mood, or photo before saving.");
+    return;
+  }
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
-      const newPost = {
-        date: date,
-        time: time,
-        comment,
-        mood,
-        image: image || null, // ✅ Save image URI
-        createdAt: Timestamp.now(),
-      };
+  try {
+    const now = new Date();
 
-      await addDoc(collection(db, "journalEntries"), newPost);
-      console.log("✅ Added New Post:", newPost);
+    const newPost = {
+      date: now.toLocaleDateString("en-US", { month: "short", day: "numeric" }), // "Sep 3"
+      time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),  // "06:45 PM"
+      dateKey: now.toISOString().split("T")[0], // "2025-09-03" ✅ reliable!
+      comment,
+      mood,
+      image: image || null,
+      createdAt: Timestamp.fromDate(now), // ✅ precise Firestore timestamp
+    };
 
-      Alert.alert("Success", "Your entry has been saved!");
-      navigation.goBack();
-    } catch (error) {
-      console.error("❌ Error saving post:", error);
-      Alert.alert("Error", "Failed to save your entry.");
-    }
+    await addDoc(collection(db, "journalEntries"), newPost);
+    console.log("✅ Added New Post:", newPost);
 
-    setLoading(false);
-  };
+    Alert.alert("Success", "Your entry has been saved!");
+    navigation.goBack();
+  } catch (error) {
+    console.error("❌ Error saving post:", error);
+    Alert.alert("Error", "Failed to save your entry.");
+  }
+
+  setLoading(false);
+};
+
 
   const moods = [
     { name: "happy", icon: "grin-alt", color: "#FFC697" },
@@ -181,17 +185,17 @@ export default function AddScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#F8F8FF" },
+  container: { flex: 1, padding: 20, backgroundColor: "#F7F4EA" }, // ✅ Cream background
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 20,
-    backgroundColor: "#F8F8FF",
+    backgroundColor: "#F7F4EA", // ✅ Consistent cream header
     padding: 10,
     borderRadius: 10,
   },
-  dateText: { fontSize: 18, fontWeight: "bold" },
-  label: { fontSize: 20, marginVertical: 10, fontWeight: "bold" },
+  dateText: { fontSize: 18, fontWeight: "bold", color: "#333" },
+  label: { fontSize: 20, marginVertical: 10, fontWeight: "bold", color: "#A8BBA3" }, // ✅ Sage green for labels
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
@@ -205,7 +209,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     marginVertical: 20,
-    backgroundColor: "#F8F8FF",
+    backgroundColor: "#F7F4EA",
     borderRadius: 10,
     paddingVertical: 10,
   },
@@ -216,7 +220,7 @@ const styles = StyleSheet.create({
     borderRadius: 35,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F8F8FF",
+    backgroundColor: "#F7F4EA",
     elevation: 2,
   },
   previewImage: {
@@ -226,7 +230,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   photoButton: {
-    backgroundColor: "#E0E5B6",
+    backgroundColor: "#EBD9D1", // ✅ Soft blush for photo button
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
@@ -234,11 +238,11 @@ const styles = StyleSheet.create({
   },
   photoButtonText: { fontSize: 16, fontWeight: "bold", color: "#000" },
   saveButton: {
-    backgroundColor: "#CBD3AD",
+    backgroundColor: "#A8BBA3", // ✅ Sage green for save button
     padding: 15,
     borderRadius: 10,
     alignItems: "center",
     marginTop: "auto",
   },
-  saveText: { color: "#000", fontSize: 18, fontWeight: "bold" },
+  saveText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
 });

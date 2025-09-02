@@ -92,16 +92,25 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 20,
-    backgroundColor: "#F8F8FF",
+    backgroundColor: "#F7F4EA", // ✅ cream background
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 20,
   },
-  dateText: { fontSize: 18, fontWeight: "bold" },
+  dateText: { 
+    fontSize: 18, 
+    fontWeight: "bold", 
+    color: "#333" 
+  },
 
-  label: { fontSize: 20, marginVertical: 10, fontWeight: "bold" },
+  label: { 
+    fontSize: 20, 
+    marginVertical: 10, 
+    fontWeight: "bold", 
+    color: "#A8BBA3" // ✅ sage green label
+  },
 
   moodBox: {
     justifyContent: "center",
@@ -123,7 +132,10 @@ const styles = StyleSheet.create({
     minHeight: 50,
     marginBottom: 15,
   },
-  postText: { fontSize: 16, color: "#333" },
+  postText: { 
+    fontSize: 16, 
+    color: "#333" 
+  },
 
   postImage: {
     width: "100%",
@@ -133,11 +145,15 @@ const styles = StyleSheet.create({
   },
 
   deleteButton: {
-    backgroundColor: "#CBD3AD",
+    backgroundColor: "#A8BBA3", // ✅ sage green delete button
     padding: 15,
     borderRadius: 10,
     alignItems: "center",
     marginTop: "auto",
   },
-  deleteText: { color: "#000", fontSize: 18, fontWeight: "bold" },
+  deleteText: { 
+    color: "#fff", 
+    fontSize: 18, 
+    fontWeight: "bold" 
+  },
 });
